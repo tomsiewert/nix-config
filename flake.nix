@@ -2,8 +2,8 @@
   description = "NixOS configs by Tom";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/release-21.11";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-21.11";
+    agenix.url = "github:ryantm/agenix";
 
     home-manager = {
       url = "github:nix-community/home-manager/release-21.11";
@@ -11,20 +11,19 @@
     };
   };
 
-  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, home-manager, ... }: {
+  outputs = inputs@{ self, nixpkgs, agenix, home-manager }: {
     nixosConfigurations = {
-      mobilerschrott = inputs.nixpkgs.lib.nixosSystem {
+      mobilerschrott = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        configuration = ./hosts/mobilerschrott;
+        modules = [ ./hosts/mobilerschrott/configuration.nix ];
         specialArgs = { inherit inputs; };
       };
-    };
-
-    homeConfigurations = {
-      toms = inputs.home-manager.lib.homeManagerConfiguration {
+      iso = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        homeDirectory = "/home/toms";
-        username = "toms";
+        modules = [
+          "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+          ./iso
+        ];
       };
     };
   };
