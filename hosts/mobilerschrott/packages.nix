@@ -7,6 +7,7 @@
     efibootmgr
     ethtool
     git
+    git-lfs
     gparted
     htop
     man-pages

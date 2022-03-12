@@ -5,9 +5,13 @@
     programs.vscode = {
       enable = true;
       package = pkgs.vscode;
-      extensions = with pkgs.vscode-extensions; [
-        vscodevim.vim
-      ];
+      extensions = map
+      (extension: pkgs.vscode-utils.buildVscodeMarketplaceExtension{
+        mktplcRef = {
+          inherit (extension) name publisher version sha256;
+        };
+      })
+      (import ./vscode-extensions.nix).extensions;
     };
   };
 }
