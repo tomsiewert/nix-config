@@ -1,6 +1,7 @@
-{ config, ... }:
+{ lib, config, ... }:
 
 {
+  systemd.services.wg-quick-wg0.wantedBy = lib.mkForce [ ];
   networking.wg-quick.interfaces = {
     wg0 = {
       address = [ "10.34.3.10/32" "2a01:4f8:11d:700:1011::2/128" ];
