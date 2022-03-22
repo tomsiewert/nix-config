@@ -58,6 +58,7 @@
     nodejs
     python3
     ruby
+    virtualenv
     wireshark
     yarn
 
