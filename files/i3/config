@@ -151,7 +151,7 @@ bindsym XF86AudioNext exec playerctl -p spotify next
 bindsym XF86AudioPrev exec playerctl -p spotify previous
 
 # Screenshot
-bindsym --release $mod+shift+Print exec scrot -s -e "mv $f /home/toms/Screenshots/"
+bindsym --release $mod+shift+End exec scrot -s -e "mv $f /home/toms/Screenshots/"
 
 # Lock
 bindsym $mod+shift+x exec i3lock -c 000000
