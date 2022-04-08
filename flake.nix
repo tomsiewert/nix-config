@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-21.11";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     agenix.url = "github:ryantm/agenix";
 
     home-manager = {
@@ -11,20 +12,28 @@
     };
   };
 
-  outputs = inputs@{ self, nixpkgs, agenix, home-manager }: {
-    nixosConfigurations = {
-      mobilerschrott = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [ ./hosts/mobilerschrott/configuration.nix ];
-        specialArgs = { inherit inputs; };
+  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, agenix, home-manager }:
+    let
+      overlay-unstable = final: prev: {
+        unstable = import inputs.nixpkgs-unstable { system = final.system; };
       };
-      iso = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [
-          "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-          ./iso
-        ];
+    in {
+      nixosConfigurations = {
+        mobilerschrott = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            ({ config, pkgs, ...}: { nixpkgs.overlays = [ overlay-unstable ]; })
+            ./hosts/mobilerschrott/configuration.nix
+          ];
+          specialArgs = { inherit inputs; };
+        };
+        iso = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+            ./iso
+          ];
+        };
       };
     };
-  };
 }
