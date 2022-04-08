@@ -3,7 +3,10 @@
 {
   environment.systemPackages = with pkgs; [
     # generic
+    ag
     curl
+    delta
+    dmidecode
     efibootmgr
     ethtool
     git
@@ -43,9 +46,9 @@
     openvpn
     remmina
     tdesktop
-    tmate
+    unstable.tmate
     wireguard
-    (pkgs.mumble.override { pulseSupport = true; })
+    (pkgs.unstable.mumble.override { pulseSupport = true; })
 
     # misc
     asciinema
