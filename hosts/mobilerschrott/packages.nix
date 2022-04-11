@@ -43,6 +43,7 @@
 
     # communication
     discord
+    element-desktop
     openvpn
     remmina
     tdesktop
