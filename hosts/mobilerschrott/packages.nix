@@ -72,6 +72,7 @@
     # management
     azure-cli
     fluxcd
+    hcloud
     kubectl
     kubernetes-helm
     velero
