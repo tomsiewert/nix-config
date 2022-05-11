@@ -6,6 +6,7 @@ in
   imports = [
     ./hardware-configuration.nix
     ./fonts.nix
+    ./network.nix
     ./packages.nix
     ./wireguard.nix
     ../../common/base

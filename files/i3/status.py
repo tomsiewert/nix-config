@@ -31,7 +31,7 @@ status.register("mem",
         format = "avail mem {avail_mem} GB / {total_mem} GB")
 
 status.register("network",
-        interface = "enp0s31f6",
+        interface = "enp2s0f0",
         format_up = "{interface}: {v4}",
         format_down = "")
 
