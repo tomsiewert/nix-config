@@ -17,8 +17,4 @@
   };
 
   services.gnome.gnome-keyring.enable = true;
-
-  environment.systemPackages = with pkgs; [
-    pkgs.gnome.networkmanagerapplet
-  ];
 }

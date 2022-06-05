@@ -3,7 +3,7 @@
 {
   environment.systemPackages = with pkgs; [
     # generic
-    ag
+    bc
     curl
     delta
     dmidecode
@@ -13,8 +13,10 @@
     git-lfs
     gparted
     htop
+    jq
     man-pages
     p7zip
+    silver-searcher
     wget
     xz
     zstd
@@ -48,12 +50,14 @@
     remmina
     tdesktop
     unstable.tmate
-    wireguard
+    wireguard-tools
     (pkgs.unstable.mumble.override { pulseSupport = true; })
 
     # misc
     asciinema
+    pwgen
     scrot
+    sipcalc
     gnome.file-roller
 
     # development
@@ -71,11 +75,11 @@
 
     # management
     azure-cli
-    fluxcd
+    unstable.fluxcd
     hcloud
     kubectl
     kubernetes-helm
-    velero
+    unstable.velero
 
     # voice
     spotify

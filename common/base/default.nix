@@ -5,7 +5,7 @@ with lib;
 {
   i18n.defaultLocale = "en_US.UTF-8";
 
-  environment.systemPackages = with pkgs; [ coreutils lm_sensors ];
+  environment.systemPackages = with pkgs; [ nvme-cli smartmontools coreutils lm_sensors ];
 
   users.mutableUsers = false;
 
