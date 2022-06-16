@@ -15,7 +15,9 @@
         i3status
         i3lock
         i3blocks
-        i3pystatus
+        (pkgs.i3pystatus.overrideAttrs (oldAttrs: {
+          propagatedBuildInputs = [pkgs.python39Packages.dbus-python] ++ oldAttrs.propagatedBuildInputs;
+        }))
       ];
     };
   };
