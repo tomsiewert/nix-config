@@ -15,7 +15,7 @@
   outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, agenix, home-manager }:
     let
       overlay-unstable = final: prev: {
-        unstable = import inputs.nixpkgs-unstable { system = final.system; };
+        unstable = import inputs.nixpkgs-unstable { config.allowUnfree = true; system = final.system; };
       };
     in {
       nixosConfigurations = {

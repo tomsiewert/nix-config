@@ -54,6 +54,7 @@
     (pkgs.unstable.mumble.override { pulseSupport = true; })
 
     # misc
+    unstable.anydesk
     asciinema
     pwgen
     scrot
