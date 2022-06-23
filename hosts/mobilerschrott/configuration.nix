@@ -9,6 +9,7 @@ in
     ./network.nix
     ./packages.nix
     ./wireguard.nix
+    ./vagrant.nix
     ../../common/base
     ../../common/docker
     ../../common/i3
