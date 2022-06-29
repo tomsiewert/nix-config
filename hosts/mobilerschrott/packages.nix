@@ -43,6 +43,10 @@
     # mail
     thunderbird
 
+    # lutris
+    gnome3.adwaita-icon-theme
+    lutris
+
     # communication
     discord
     element-desktop
