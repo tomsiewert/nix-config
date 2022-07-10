@@ -2,7 +2,7 @@
 
 {
   home-manager.users.toms = { pkgs, ... }: {
-    home.file.".Xresources".source =
+    home.file.".Xdefaults".source =
       ../../files/urxvt/Xresources;
   };
 }

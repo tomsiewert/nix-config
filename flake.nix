@@ -27,6 +27,14 @@
           ];
           specialArgs = { inherit inputs; };
         };
+        matcha-tea-latte = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            ({ config, pkgs, ...}: { nixpkgs.overlays = [ overlay-unstable ]; })
+            ./hosts/matcha-tea-latte/configuration.nix
+          ];
+          specialArgs = { inherit inputs; };
+        };
         iso = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           modules = [
