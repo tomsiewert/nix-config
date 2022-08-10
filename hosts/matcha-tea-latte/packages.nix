@@ -23,6 +23,7 @@
     zstd
     bind
     whois
+    changelogger
 
     # browser
     firefox
@@ -50,7 +51,13 @@
     steam
 
     # communication
-    discord
+    (discord.override {
+      version = "0.0.19";
+      src = fetchurl {
+        url = "https://dl.discordapp.net/apps/linux/0.0.19/discord-0.0.19.tar.gz";
+        sha256 = "1403vdc7p6a8mhr114brfp4dqvikaj5s71wrx20ca5y6srsv5x0r";
+      };
+    })
     element-desktop
     openvpn
     remmina
