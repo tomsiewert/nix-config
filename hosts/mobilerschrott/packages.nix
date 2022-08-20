@@ -22,6 +22,8 @@
     zstd
     bind
     whois
+    age
+    sops
 
     # browser
     firefox

@@ -1,0 +1,10 @@
+---
+keys:
+  - &toms age1vm9mww72aymqc4f85p7mc2hd850up8s8mgc9cyuz8hrpfee4p4uqdxjlwq
+  - &mobilerschrott age12ps0thugwnvj9ky0pqkgz56afteuld7zujk0f75hjsk8hqxa7cqq5pgehc
+creation_rules:
+  - path_rege: hosts/mobilerschrott/secrets/[^/]+\.yaml$
+    key_groups:
+      - age:
+          - *toms
+          - *mobilerschrott

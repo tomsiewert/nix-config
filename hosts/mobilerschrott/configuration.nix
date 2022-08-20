@@ -10,11 +10,12 @@ in
     ./packages.nix
     ./wireguard.nix
     ./vagrant.nix
+    ../../modules/sops
+    ../../modules/sound
     ../../common/base
     ../../common/docker
     ../../common/i3
     ../../common/bluetooth.nix
-    ../../common/graphics/sound.nix
     ../../common/network/networkmanager.nix
     ../../users/toms
   ];

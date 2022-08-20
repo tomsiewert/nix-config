@@ -1,11 +1,15 @@
-{ lib, config, ... }:
+{ lib, config, sops, ... }:
 
 {
+  sops.secrets = {
+    "wireguard__wg_fsn1_vpn1_privatekey" = {};
+  };
+
   systemd.services.wg-quick-wg0.wantedBy = lib.mkForce [ ];
   networking.wg-quick.interfaces = {
     wg0 = {
       address = [ "10.34.3.10/32" "2a01:4f8:11d:700:1011::2/128" ];
-      privateKeyFile = "/home/toms/.secrets/wg0_priv";
+      privateKeyFile = config.sops.secrets."wireguard__wg_fsn1_vpn1_privatekey".path;
       dns = [ "8.8.8.8" ];
       peers = [
         {
