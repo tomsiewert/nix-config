@@ -11,6 +11,7 @@
     ./i3.nix
     ./intellij.nix
     ./rofi.nix
+    ./ssh.nix
     ./tmux.nix
     ./vscode.nix
     ./zsh.nix
