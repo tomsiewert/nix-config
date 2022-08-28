@@ -8,11 +8,11 @@ in
     ./fonts.nix
     ./packages.nix
     ./vagrant.nix
+    ../../modules/sound
     ../../common/base
     ../../common/docker
     ../../common/i3
     ../../common/bluetooth.nix
-    ../../common/graphics/sound.nix
     ../../common/network/networkmanager.nix
     ../../users/toms
   ];
@@ -43,7 +43,7 @@ in
   hardware.opengl.driSupport32Bit = true;
   hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.stable;
 
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_5_19;
 
   services.xserver.videoDrivers = [
     "nvidia"
