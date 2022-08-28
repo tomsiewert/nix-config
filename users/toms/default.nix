@@ -3,6 +3,7 @@
 {
   imports = [
     ./base.nix
+    ./emacs.nix
     ./fzf.nix
     ./git.nix
     ./go.nix
