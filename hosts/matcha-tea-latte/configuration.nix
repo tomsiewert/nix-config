@@ -9,6 +9,7 @@ in
     ./packages.nix
     ./vagrant.nix
     ../../modules/sound
+    ../../modules/sops
     ../../common/base
     ../../common/docker
     ../../common/i3

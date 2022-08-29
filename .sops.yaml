@@ -2,8 +2,15 @@
 keys:
   - &toms age1vm9mww72aymqc4f85p7mc2hd850up8s8mgc9cyuz8hrpfee4p4uqdxjlwq
   - &mobilerschrott age12ps0thugwnvj9ky0pqkgz56afteuld7zujk0f75hjsk8hqxa7cqq5pgehc
+  - &matcha-tea-latte age1xyqdlj4lp0p4jzejh8xu3ttg6rwn7jy8qkuz3wlzgs78wyc33d3ss3pzh8
 creation_rules:
   - path_regex: secrets/[^/]+\.yaml$
+    key_groups:
+      - age:
+          - *toms
+          - *mobilerschrott
+          - *matcha-tea-latte
+  - path_regex: hosts/mobilerschrott/secrets/[^/]+\.yaml$
     key_groups:
       - age:
           - *toms
@@ -12,4 +19,4 @@ creation_rules:
     key_groups:
       - age:
           - *toms
-          - *mobilerschrott
+          - *matcha-tea-latte
