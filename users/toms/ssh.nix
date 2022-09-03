@@ -4,7 +4,7 @@
       sopsFile = ../../secrets/ssh.yaml;
       owner = "toms";
       path = "/home/toms/.ssh/id_tsiewert";
-      mode = "0440";
+      mode = "0400";
     };
   };
 }
