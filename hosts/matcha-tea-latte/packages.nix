@@ -49,6 +49,7 @@
     gnome3.adwaita-icon-theme
     lutris
     steam
+    polymc
 
     # communication
     (discord.override {
