@@ -50,7 +50,7 @@
     lutris
 
     # communication
-    unstable.discord
+    master.discord
     element-desktop
     openvpn
     remmina

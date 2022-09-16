@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-22.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-master.url = "github:nixos/nixpkgs/master";
     sops-nix.url = "github:Mic92/sops-nix";
 
     home-manager = {
@@ -12,10 +13,11 @@
     };
   };
 
-  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, sops-nix, home-manager }:
+  outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, nixpkgs-master, sops-nix, home-manager }:
     let
       overlay-unstable = final: prev: {
         unstable = import inputs.nixpkgs-unstable { config.allowUnfree = true; system = final.system; };
+        master = import inputs.nixpkgs-master { config.allowUnfree = true; system = final.system; };
       };
     in {
       nixosConfigurations = {
