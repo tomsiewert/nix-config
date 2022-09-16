@@ -1,0 +1,661 @@
+From 9d2c1d3204c042808858b836ef7e7b732df91ece Mon Sep 17 00:00:00 2001
+From: Franziska Kunsmann <hi@kunsmann.eu>
+Date: Sun, 3 Jul 2022 14:39:19 +0200
+Subject: [PATCH 1/6] add wifionice module
+
+---
+ i3pystatus/wifionice.py | 176 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 176 insertions(+)
+ create mode 100755 i3pystatus/wifionice.py
+
+diff --git a/i3pystatus/wifionice.py b/i3pystatus/wifionice.py
+new file mode 100755
+index 00000000..9fe57ddf
+--- /dev/null
++++ b/i3pystatus/wifionice.py
+@@ -0,0 +1,176 @@
++from datetime import datetime, timedelta
++from urllib.request import urlopen
++from subprocess import check_output
++from json import loads
++
++from i3pystatus import IntervalModule
++from i3pystatus.core.util import internet, require
++
++
++class WifiOnIceAPI(IntervalModule):
++    """
++    Displays information about your current trip on Deutsche Bahn trains.
++
++    Requires the PyPI package `basiciw` if you want to use automatic
++    detection. See below on how to disable automatic detection based on
++    wifi network names.
++
++    .. rubric:: Available formatters
++
++    For `format_delay` option:
++
++    * `{delay}` - delay of train in minutes
++
++    For `format_network_info` option:
++
++    * `{currently}` - current state of network quality
++    * `{duration}` - how long until the next network quality change
++    * `{expected}` - next state of network quality
++
++    For `format_next_stop` option:
++
++    * `{station}` - Station name
++    * `{platform}` - Platform number or name
++    * `{arrival_time}` - Arrival time of train at the station (actual, if available, otherwise scheduled)
++    * `{arrival_in}` - Time until arrival (in form "1h 12m" or "53m")
++    * `{delay}` - Output of `format_delay` (or empty if no delay)`
++
++    For `format_output` formatter:
++
++    * `{speed}` - Train speed in km/h
++    * `{next_stop}` - Output of `format_next_stop` (or `final_destination` option)
++    * `{network_info}` - Output of `format_network_info` (or empty if neither current nor next info is known)
++    """
++
++    final_destination = 'Endstation, bitte aussteigen!'
++    format_delay = ' | <span color="#FF0000">{delay_minutes}</span>'
++    format_network_info = ' <span color="#999999">(Net: {currently} > [{duration}] {expected})</span>'
++    format_next_stop = '{station} <span color="#999999">[{platform}]</span> {arrival_time} ({arrival_in}{delay})'
++    format_output = '<span color="#999999">{speed}km/h</span> > {next_stop}{network_info}'
++    ice_status = {}
++    interval = 2
++    on_leftclick = 'open_travelynx'
++    travelynx_url = 'travelynx.de'
++    trip_info = {}
++    wifi_adapters = ['wlan0']
++    wifi_names = ['wifi@db', 'wifionice']
++
++    settings = (
++        ("final_destination", "Information text for 'final destination has been reached'"),
++        ("format_delay", "Formatter for delay information"),
++        ("format_network_info", "Formatter for network information"),
++        ("format_next_stop", "Formatter for next stop information"),
++        ("format_output", "Formatter for output to i3bar"),
++        ("travelynx_url", "URL of your travelynx page"),
++        ("wifi_adapters", "List of wifi adapters the module should consider "
++                          "when detecting if you are in a train. Set to `None` "
++                          "to disable that functionality."),
++        ("wifi_names", "List of Wifi network names that should be considered 'on a train'."),
++    )
++
++    def _format_time(self, seconds):
++        if seconds is None:
++            return "?"
++        seconds = int(seconds)
++        components = []
++        if seconds >= 3600:
++            hours = int(seconds / 3600)
++            seconds -= hours * 3600
++            components.append('{}h'.format(hours))
++        if seconds >= 60:
++            minutes = int(seconds / 60)
++            seconds -= minutes * 60
++            components.append('{}m'.format(minutes))
++        if not components:
++            components.append('now')
++        return " ".join(components)
++
++    def _get_data(self):
++        trip_info_req = urlopen('https://iceportal.de/api1/rs/tripInfo/trip')
++        self.trip_info = loads(trip_info_req.read())['trip']
++
++        ice_status_req = urlopen('https://iceportal.de/api1/rs/status')
++        self.ice_status = loads(ice_status_req.read())
++
++    def _check_wifi(self):
++        if self.wifi_adapters is None:
++            return True
++
++        from basiciw import iwinfo
++        for adapter in self.wifi_adapters:
++            iwi = iwinfo(adapter)
++            for wifi in self.wifi_names:
++                if iwi['essid'].lower() == wifi.lower():
++                    return True
++        return False
++
++    def open_travelynx(self):
++        if not self._check_wifi():
++            return None
++        if not self.trip_info:
++            self._get_data()
++        check_output(['xdg-open', 'https://{}/s/{}?train={}%20{}'.format(
++            self.travelynx_url,
++            self.trip_info['stopInfo']['actualLast'],
++            self.trip_info['trainType'],
++            self.trip_info['vzn'],
++        )])
++
++    def run(self):
++        if self._check_wifi():
++            self._get_data()
++            now = datetime.now()
++
++            next_stop_id = self.trip_info['stopInfo']['actualNext']
++            for stop in self.trip_info['stops']:
++                if stop['station']['evaNr'] == next_stop_id:
++                    if stop['timetable']['departureDelay']:
++                        delay = self.format_delay.format(
++                            delay=stop['timetable']['departureDelay'],
++                        )
++                    else:
++                        delay = ''
++
++                    if stop['timetable'].get('actualArrivalTime', 0):
++                        arrival = datetime.fromtimestamp(stop['timetable']['actualArrivalTime'] / 1000)
++                        arrival_in = arrival - now
++                    elif stop['timetable'].get('scheduledArrivalTime', 0):
++                        arrival = datetime.fromtimestamp(stop['timetable']['scheduledArrivalTime'] / 1000)
++                        arrival_in = arrival - now
++                    else:
++                        arrival = datetime.now()
++                        arrival_in = timedelta()
++
++                    next_stop = self.format_next_stop.format(
++                        station=stop['station']['name'],
++                        platform=stop['track']['actual'],
++                        arrival_time=arrival.strftime('%H:%M'),
++                        arrival_in=self._format_time(arrival_in.total_seconds()),
++                        delay=delay
++                    )
++                    break
++            else:
++                next_stop = self.final_destination
++
++            net_current = self.ice_status['connectivity']['currentState']
++            net_future = self.ice_status['connectivity']['nextState']
++
++            if net_current not in (None, 'NO_INFO') or net_future not in (None, 'NO_INFO'):
++                net = self.format_network_info.format(
++                    currently=net_current,
++                    duration=self._format_time(self.ice_status['connectivity']['remainingTimeSeconds']),
++                    expected=net_future,
++                )
++            else:
++                net = ''
++
++            self.output = {
++                'full_text': self.format_output.format(
++                    speed=self.ice_status['speed'],
++                    next_stop=next_stop,
++                    network_info=net,
++                ),
++                'markup': 'pango',
++            }
++        else:
++            self.output = None
+
+From e6b8848a56f07b6772f638de0edaf53ec76161e0 Mon Sep 17 00:00:00 2001
+From: Franziska Kunsmann <hi@kunsmann.eu>
+Date: Sun, 3 Jul 2022 18:53:05 +0200
+Subject: [PATCH 2/6] wifionice: clean up imports, fix typo in docs
+
+---
+ i3pystatus/wifionice.py | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/i3pystatus/wifionice.py b/i3pystatus/wifionice.py
+index 9fe57ddf..c963ef76 100755
+--- a/i3pystatus/wifionice.py
++++ b/i3pystatus/wifionice.py
+@@ -4,7 +4,6 @@
+ from json import loads
+ 
+ from i3pystatus import IntervalModule
+-from i3pystatus.core.util import internet, require
+ 
+ 
+ class WifiOnIceAPI(IntervalModule):
+@@ -13,7 +12,7 @@ class WifiOnIceAPI(IntervalModule):
+ 
+     Requires the PyPI package `basiciw` if you want to use automatic
+     detection. See below on how to disable automatic detection based on
+-    wifi network names.
++    wifi adapter names.
+ 
+     .. rubric:: Available formatters
+ 
+
+From ae1ed87cbc4326c332c3f5e6b8d199a791ac2e94 Mon Sep 17 00:00:00 2001
+From: Franziska Kunsmann <hi@kunsmann.eu>
+Date: Sun, 3 Jul 2022 20:55:02 +0200
+Subject: [PATCH 3/6] wifionice: reformat module to use one formatting string
+ only
+
+---
+ i3pystatus/wifionice.py | 107 ++++++++++++++++++----------------------
+ 1 file changed, 47 insertions(+), 60 deletions(-)
+
+diff --git a/i3pystatus/wifionice.py b/i3pystatus/wifionice.py
+index c963ef76..410be697 100755
+--- a/i3pystatus/wifionice.py
++++ b/i3pystatus/wifionice.py
+@@ -1,14 +1,17 @@
+ from datetime import datetime, timedelta
+-from urllib.request import urlopen
+-from subprocess import check_output
+ from json import loads
++from subprocess import check_output
++from urllib.request import urlopen
+ 
+ from i3pystatus import IntervalModule
++from i3pystatus.core.util import formatp
+ 
+ 
+ class WifiOnIceAPI(IntervalModule):
+     """
+     Displays information about your current trip on Deutsche Bahn trains.
++    The default behaviour on left-click is to send you to travelynx for
++    easy check-in to the train.
+ 
+     Requires the PyPI package `basiciw` if you want to use automatic
+     detection. See below on how to disable automatic detection based on
+@@ -16,36 +19,20 @@ class WifiOnIceAPI(IntervalModule):
+ 
+     .. rubric:: Available formatters
+ 
+-    For `format_delay` option:
+-
+-    * `{delay}` - delay of train in minutes
+-
+-    For `format_network_info` option:
+-
+-    * `{currently}` - current state of network quality
+-    * `{duration}` - how long until the next network quality change
+-    * `{expected}` - next state of network quality
+-
+-    For `format_next_stop` option:
+-
+-    * `{station}` - Station name
+-    * `{platform}` - Platform number or name
+-    * `{arrival_time}` - Arrival time of train at the station (actual, if available, otherwise scheduled)
+     * `{arrival_in}` - Time until arrival (in form "1h 12m" or "53m")
+-    * `{delay}` - Output of `format_delay` (or empty if no delay)`
+-
+-    For `format_output` formatter:
+-
++    * `{arrival_time}` - Arrival time of train at the station (actual, if available, otherwise scheduled)
++    * `{delay}` - delay of train in minutes
++    * `{net_current}` - current state of network quality
++    * `{net_duration}` - how long until the next network quality change
++    * `{net_expected}` - next state of network quality
++    * `{next_platform}` - Platform number or name
++    * `{next_station}` - Station name
+     * `{speed}` - Train speed in km/h
+-    * `{next_stop}` - Output of `format_next_stop` (or `final_destination` option)
+-    * `{network_info}` - Output of `format_network_info` (or empty if neither current nor next info is known)
+     """
+ 
+-    final_destination = 'Endstation, bitte aussteigen!'
+-    format_delay = ' | <span color="#FF0000">{delay_minutes}</span>'
+-    format_network_info = ' <span color="#999999">(Net: {currently} > [{duration}] {expected})</span>'
+-    format_next_stop = '{station} <span color="#999999">[{platform}]</span> {arrival_time} ({arrival_in}{delay})'
+-    format_output = '<span color="#999999">{speed}km/h</span> > {next_stop}{network_info}'
++    final_destination = 'Endstation'
++    format_ontrain = '{speed}km/h > {next_station} ({arrival_in}[ | {delay_minutes}])'
++    format_offtrain = None
+     ice_status = {}
+     interval = 2
+     on_leftclick = 'open_travelynx'
+@@ -56,10 +43,8 @@ class WifiOnIceAPI(IntervalModule):
+ 
+     settings = (
+         ("final_destination", "Information text for 'final destination has been reached'"),
+-        ("format_delay", "Formatter for delay information"),
+-        ("format_network_info", "Formatter for network information"),
+-        ("format_next_stop", "Formatter for next stop information"),
+-        ("format_output", "Formatter for output to i3bar"),
++        ("format_ontrain", "Formatter for 'on a train'"),
++        ("format_offtrain", "Formatter for 'not on a train' (module hidden if `None`)"),
+         ("travelynx_url", "URL of your travelynx page"),
+         ("wifi_adapters", "List of wifi adapters the module should consider "
+                           "when detecting if you are in a train. Set to `None` "
+@@ -106,8 +91,10 @@ def _check_wifi(self):
+     def open_travelynx(self):
+         if not self._check_wifi():
+             return None
++
+         if not self.trip_info:
+             self._get_data()
++
+         check_output(['xdg-open', 'https://{}/s/{}?train={}%20{}'.format(
+             self.travelynx_url,
+             self.trip_info['stopInfo']['actualLast'],
+@@ -118,17 +105,26 @@ def open_travelynx(self):
+     def run(self):
+         if self._check_wifi():
+             self._get_data()
+-            now = datetime.now()
++
++            format_vars = {
++                'arrival_in': '?',
++                'arrival_time': '',
++                'net_current': '',
++                'net_duration': '?',
++                'net_expected': '',
++                'next_platform': '',
++                'next_station': self.final_destination,
++                'speed': self.ice_status['speed'],
++            }
+ 
+             next_stop_id = self.trip_info['stopInfo']['actualNext']
++            now = datetime.now()
+             for stop in self.trip_info['stops']:
+                 if stop['station']['evaNr'] == next_stop_id:
+                     if stop['timetable']['departureDelay']:
+-                        delay = self.format_delay.format(
+-                            delay=stop['timetable']['departureDelay'],
+-                        )
++                        format_vars['delay'] = stop['timetable']['departureDelay'],
+                     else:
+-                        delay = ''
++                        format_vars['delay'] = 0
+ 
+                     if stop['timetable'].get('actualArrivalTime', 0):
+                         arrival = datetime.fromtimestamp(stop['timetable']['actualArrivalTime'] / 1000)
+@@ -140,36 +136,27 @@ def run(self):
+                         arrival = datetime.now()
+                         arrival_in = timedelta()
+ 
+-                    next_stop = self.format_next_stop.format(
+-                        station=stop['station']['name'],
+-                        platform=stop['track']['actual'],
+-                        arrival_time=arrival.strftime('%H:%M'),
+-                        arrival_in=self._format_time(arrival_in.total_seconds()),
+-                        delay=delay
+-                    )
++                    format_vars['next_station'] = stop['station']['name']
++                    format_vars['next_platform'] = stop['track']['actual']
++                    format_vars['arrival_time'] = arrival.strftime('%H:%M')
++                    format_vars['arrival_in'] = self._format_time(arrival_in.total_seconds())
+                     break
+-            else:
+-                next_stop = self.final_destination
+ 
+             net_current = self.ice_status['connectivity']['currentState']
+             net_future = self.ice_status['connectivity']['nextState']
+ 
+             if net_current not in (None, 'NO_INFO') or net_future not in (None, 'NO_INFO'):
+-                net = self.format_network_info.format(
+-                    currently=net_current,
+-                    duration=self._format_time(self.ice_status['connectivity']['remainingTimeSeconds']),
+-                    expected=net_future,
+-                )
+-            else:
+-                net = ''
++                format_vars['net_current'] = net_current
++                format_vars['net_expected'] = net_expected
++                format_vars['net_duration'] = self._format_time(self.ice_status['connectivity']['remainingTimeSeconds'])
+ 
+             self.output = {
+-                'full_text': self.format_output.format(
+-                    speed=self.ice_status['speed'],
+-                    next_stop=next_stop,
+-                    network_info=net,
+-                ),
+-                'markup': 'pango',
++                'full_text': formatp(self.format_ontrain, **format_vars).strip(),
+             }
+         else:
+-            self.output = None
++            if self.format_offtrain is not None:
++                self.output = {
++                    'full_text': self.format_offtrain,
++                }
++            else:
++                self.output = None
+
+From 03d8296d7fe403c4322dbe44270320ce572f0635 Mon Sep 17 00:00:00 2001
+From: Franziska Kunsmann <hi@kunsmann.eu>
+Date: Sun, 3 Jul 2022 21:38:55 +0200
+Subject: [PATCH 4/6] wifionice: rework everything to use different intervals
+ for "on train" and "off train"
+
+---
+ i3pystatus/wifionice.py | 76 +++++++++++++++++++++++++++--------------
+ 1 file changed, 51 insertions(+), 25 deletions(-)
+
+diff --git a/i3pystatus/wifionice.py b/i3pystatus/wifionice.py
+index 410be697..355a8c23 100755
+--- a/i3pystatus/wifionice.py
++++ b/i3pystatus/wifionice.py
+@@ -1,13 +1,13 @@
+ from datetime import datetime, timedelta
+ from json import loads
+-from subprocess import check_output
+ from urllib.request import urlopen
++from threading import Condition, Thread
+ 
+-from i3pystatus import IntervalModule
+-from i3pystatus.core.util import formatp
++from i3pystatus import Module
++from i3pystatus.core.util import formatp, user_open
+ 
+ 
+-class WifiOnIceAPI(IntervalModule):
++class WifiOnIceAPI(Module):
+     """
+     Displays information about your current trip on Deutsche Bahn trains.
+     The default behaviour on left-click is to send you to travelynx for
+@@ -31,20 +31,23 @@ class WifiOnIceAPI(IntervalModule):
+     """
+ 
+     final_destination = 'Endstation'
+-    format_ontrain = '{speed}km/h > {next_station} ({arrival_in}[ | {delay_minutes}])'
+     format_offtrain = None
++    format_ontrain = '{speed}km/h > {next_station} ({arrival_in}[ | {delay_minutes}])'
+     ice_status = {}
+-    interval = 2
++    off_train_interval = 10
+     on_leftclick = 'open_travelynx'
++    on_train_interval = 2
+     travelynx_url = 'travelynx.de'
+     trip_info = {}
+     wifi_adapters = ['wlan0']
+-    wifi_names = ['wifi@db', 'wifionice']
++    wifi_names = ['WiFi@DB', 'WIFIonICE']
+ 
+     settings = (
+         ("final_destination", "Information text for 'final destination has been reached'"),
+         ("format_ontrain", "Formatter for 'on a train'"),
+-        ("format_offtrain", "Formatter for 'not on a train' (module hidden if `None`)"),
++        ("format_offtrain", "Formatter for 'not on a train' (module hidden if `None` - no formatters available)"),
++        ("off_train_interval", "time between updates if no train is detected"),
++        ("on_train_interval", "time between updates while on a train"),
+         ("travelynx_url", "URL of your travelynx page"),
+         ("wifi_adapters", "List of wifi adapters the module should consider "
+                           "when detecting if you are in a train. Set to `None` "
+@@ -69,13 +72,6 @@ def _format_time(self, seconds):
+             components.append('now')
+         return " ".join(components)
+ 
+-    def _get_data(self):
+-        trip_info_req = urlopen('https://iceportal.de/api1/rs/tripInfo/trip')
+-        self.trip_info = loads(trip_info_req.read())['trip']
+-
+-        ice_status_req = urlopen('https://iceportal.de/api1/rs/status')
+-        self.ice_status = loads(ice_status_req.read())
+-
+     def _check_wifi(self):
+         if self.wifi_adapters is None:
+             return True
+@@ -88,24 +84,54 @@ def _check_wifi(self):
+                     return True
+         return False
+ 
+-    def open_travelynx(self):
+-        if not self._check_wifi():
+-            return None
++    def _loop(self):
++        while True:
++
++            if self._check_wifi():
++                try:
++                    trip_info_req = urlopen('https://iceportal.de/api1/rs/tripInfo/trip')
++                    self.trip_info = loads(trip_info_req.read())['trip']
++
++                    ice_status_req = urlopen('https://iceportal.de/api1/rs/status')
++                    self.ice_status = loads(ice_status_req.read())
++                except Exception:
++                    self.trip_info = {}
++                    self.ice_status = {}
++
++                self.update_bar()
+ 
++                with self.condition:
++                    self.condition.wait(self.on_train_interval)
++            else:
++                self.trip_info = {}
++                self.ice_status = {}
++
++                self.update_bar()
++
++                with self.condition:
++                    self.condition.wait(self.off_train_interval)
++
++    def init(self):
++        self.condition = Condition()
++        self.thread = Thread(
++            target=self._loop,
++            daemon=True
++        )
++        self.thread.start()
++
++    def open_travelynx(self):
+         if not self.trip_info:
+-            self._get_data()
++            return
+ 
+-        check_output(['xdg-open', 'https://{}/s/{}?train={}%20{}'.format(
++        user_open('https://{}/s/{}?train={}%20{}'.format(
+             self.travelynx_url,
+             self.trip_info['stopInfo']['actualLast'],
+             self.trip_info['trainType'],
+             self.trip_info['vzn'],
+-        )])
+-
+-    def run(self):
+-        if self._check_wifi():
+-            self._get_data()
++        ))
+ 
++    def update_bar(self):
++        if self.trip_info and self.ice_status:
+             format_vars = {
+                 'arrival_in': '?',
+                 'arrival_time': '',
+
+From 0628fca6b3873233f417c22356ddec348c61f3b4 Mon Sep 17 00:00:00 2001
+From: Franziska Kunsmann <hi@kunsmann.eu>
+Date: Wed, 6 Jul 2022 08:30:00 +0200
+Subject: [PATCH 5/6] wifionice: add some logging, fix typo in variable naming
+
+---
+ i3pystatus/wifionice.py | 20 ++++++++++++++++++--
+ 1 file changed, 18 insertions(+), 2 deletions(-)
+
+diff --git a/i3pystatus/wifionice.py b/i3pystatus/wifionice.py
+index 355a8c23..a81fad19 100755
+--- a/i3pystatus/wifionice.py
++++ b/i3pystatus/wifionice.py
+@@ -74,20 +74,26 @@ def _format_time(self, seconds):
+ 
+     def _check_wifi(self):
+         if self.wifi_adapters is None:
++            self.logger.debug('self.wifi_adapters is None')
+             return True
+ 
+         from basiciw import iwinfo
+         for adapter in self.wifi_adapters:
++            self.logger.info(f'Checking {adapter} for compatible wifi network')
+             iwi = iwinfo(adapter)
+             for wifi in self.wifi_names:
+                 if iwi['essid'].lower() == wifi.lower():
++                    self.logger.info(f'{adapter} uses {wifi} - success!')
+                     return True
++        self.logger.info('No matching wifi connection found')
+         return False
+ 
+     def _loop(self):
++        self.logger.debug('begin of _loop()')
+         while True:
+-
++            self.logger.debug('new _loop()')
+             if self._check_wifi():
++                self.logger.info('On a train :)')
+                 try:
+                     trip_info_req = urlopen('https://iceportal.de/api1/rs/tripInfo/trip')
+                     self.trip_info = loads(trip_info_req.read())['trip']
+@@ -98,14 +104,22 @@ def _loop(self):
+                     self.trip_info = {}
+                     self.ice_status = {}
+ 
++                self.logger.debug(f'trip_info: {repr(self.trip_info)}')
++                self.logger.debug(f'ice_status: {repr(self.ice_status)}')
++
+                 self.update_bar()
+ 
+                 with self.condition:
+                     self.condition.wait(self.on_train_interval)
+             else:
++                self.logger.info('Not on a train :(')
++
+                 self.trip_info = {}
+                 self.ice_status = {}
+ 
++                self.logger.debug(f'trip_info: {repr(self.trip_info)}')
++                self.logger.debug(f'ice_status: {repr(self.ice_status)}')
++
+                 self.update_bar()
+ 
+                 with self.condition:
+@@ -173,9 +187,11 @@ def update_bar(self):
+ 
+             if net_current not in (None, 'NO_INFO') or net_future not in (None, 'NO_INFO'):
+                 format_vars['net_current'] = net_current
+-                format_vars['net_expected'] = net_expected
++                format_vars['net_expected'] = net_future
+                 format_vars['net_duration'] = self._format_time(self.ice_status['connectivity']['remainingTimeSeconds'])
+ 
++            self.logger.debug(f'format_vars: {repr(format_vars)}')
++
+             self.output = {
+                 'full_text': formatp(self.format_ontrain, **format_vars).strip(),
+             }
+
+From f95caca53289a10f06850a4c3f9265d45dfc7656 Mon Sep 17 00:00:00 2001
+From: Franziska Kunsmann <hi@kunsmann.eu>
+Date: Fri, 8 Jul 2022 12:41:13 +0200
+Subject: [PATCH 6/6] wifionice: fix delay display
+
+---
+ i3pystatus/wifionice.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/i3pystatus/wifionice.py b/i3pystatus/wifionice.py
+index a81fad19..e3c2cc34 100755
+--- a/i3pystatus/wifionice.py
++++ b/i3pystatus/wifionice.py
+@@ -32,7 +32,7 @@ class WifiOnIceAPI(Module):
+ 
+     final_destination = 'Endstation'
+     format_offtrain = None
+-    format_ontrain = '{speed}km/h > {next_station} ({arrival_in}[ | {delay_minutes}])'
++    format_ontrain = '{speed}km/h > {next_station} ({arrival_in}[ | {delay}])'
+     ice_status = {}
+     off_train_interval = 10
+     on_leftclick = 'open_travelynx'
+@@ -162,7 +162,7 @@ def update_bar(self):
+             for stop in self.trip_info['stops']:
+                 if stop['station']['evaNr'] == next_stop_id:
+                     if stop['timetable']['departureDelay']:
+-                        format_vars['delay'] = stop['timetable']['departureDelay'],
++                        format_vars['delay'] = stop['timetable']['departureDelay']
+                     else:
+                         format_vars['delay'] = 0

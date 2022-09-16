@@ -16,6 +16,7 @@
         i3lock
         i3blocks
         (pkgs.i3pystatus.overrideAttrs (oldAttrs: {
+          patches = [ ./i3pystatus-wifionice.patch ];
           propagatedBuildInputs = [pkgs.python39Packages.dbus-python] ++ oldAttrs.propagatedBuildInputs;
         }))
       ];

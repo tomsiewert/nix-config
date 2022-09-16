@@ -72,6 +72,7 @@
     nix-prefetch-git
     nodejs
     python3
+    ripgrep
     ruby
     virtualenv
     wireshark

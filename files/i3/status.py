@@ -44,4 +44,7 @@ status.register("now_playing",
         player = "spotify",
         format = "Spotify: {title} {status}",)
 
+status.register('wifionice',
+                wifi_adapters = ['wlp3s0'])
+
 status.run()
