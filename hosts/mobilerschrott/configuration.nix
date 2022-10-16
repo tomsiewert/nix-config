@@ -53,9 +53,12 @@ in
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  services.xserver.videoDrivers = [
-    "amdgpu"
-  ];
+  services.xserver = {
+    libinput.touchpad.naturalScrolling = true;
+    videoDrivers = [
+      "amdgpu"
+    ];
+  };
 
   networking = {
     hostName = hostname;
