@@ -46,9 +46,12 @@ in
 
   boot.kernelPackages = pkgs.linuxPackages_5_19;
 
-  services.xserver.videoDrivers = [
-    "nvidia"
-  ];
+  services.xserver = {
+    libinput.touchpad.naturalScrolling = true;
+    videoDrivers = [
+      "nvidia"
+    ];
+  };
 
   networking = {
     hostName = hostname;
