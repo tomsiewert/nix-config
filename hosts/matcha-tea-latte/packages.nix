@@ -49,7 +49,6 @@
     gnome3.adwaita-icon-theme
     lutris
     steam
-    polymc
 
     # communication
     master.discord
