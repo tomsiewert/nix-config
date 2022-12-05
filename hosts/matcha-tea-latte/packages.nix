@@ -61,6 +61,7 @@
     (pkgs.unstable.mumble.override { pulseSupport = true; })
 
     # misc
+    unstable.makemkv
     unstable.anydesk
     asciinema
     pwgen
