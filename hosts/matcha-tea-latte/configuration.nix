@@ -19,6 +19,7 @@ in
   ];
 
   boot = {
+    supportedFilesystems = [ "ntfs" ];
     loader = {
       efi = {
         canTouchEfiVariables = true;

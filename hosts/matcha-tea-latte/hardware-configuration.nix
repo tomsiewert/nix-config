@@ -28,6 +28,12 @@
       fsType = "vfat";
     };
 
+  fileSystems."/media/games" =
+    { device = "/dev/disk/by-uuid/D2B2AD27B2AD1151";
+      fsType = "ntfs3";
+      options = [ "rw" "uid=1000"];
+    };
+
   swapDevices = [ ];
 
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
