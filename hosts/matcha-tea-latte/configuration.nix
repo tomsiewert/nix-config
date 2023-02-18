@@ -44,7 +44,7 @@ in
   hardware.opengl.driSupport32Bit = true;
   hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.stable;
 
-  boot.kernelPackages = pkgs.unstable.linuxPackages_6_0;
+  boot.kernelPackages = pkgs.unstable.linuxPackages_latest;
 
   services.xserver = {
     libinput.touchpad.naturalScrolling = true;
