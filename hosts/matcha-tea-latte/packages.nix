@@ -24,7 +24,7 @@
     bind
     whois
     changelogger
-
+    kicad
     # browser
     firefox
     google-chrome
