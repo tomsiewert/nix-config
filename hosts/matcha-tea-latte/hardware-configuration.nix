@@ -30,8 +30,8 @@
 
   fileSystems."/media/games" =
     { device = "/dev/disk/by-uuid/D2B2AD27B2AD1151";
-      fsType = "ntfs3";
-      options = [ "rw" "uid=1000"];
+      fsType = "ntfs";
+      options = [ "rw" "uid=1000" "utf8" ];
     };
 
   swapDevices = [ ];
