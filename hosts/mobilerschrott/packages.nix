@@ -60,6 +60,7 @@
     (pkgs.unstable.mumble.override { pulseSupport = true; })
 
     # misc
+    keepassxc
     unstable.anydesk
     asciinema
     pwgen
@@ -94,6 +95,7 @@
   ];
 
   programs = {
+    java = { enable = true; package = pkgs.jdk11; };
     mtr.enable = true;
     gnupg.agent.enable = true;
     zsh.enable = true;
