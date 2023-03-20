@@ -26,7 +26,6 @@ set -g status-right '#[fg=green][#[fg=blue]%Y-%m-%d #[fg=white]%H:%M#[default]#[
 
 set -g status off
 
-set-option -g default-shell /usr/bin/zsh
 set -g default-terminal screen-256color
 
 setw -g automatic-rename on
