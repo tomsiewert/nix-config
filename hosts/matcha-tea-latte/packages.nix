@@ -76,6 +76,7 @@
     python3
     ruby
     virtualenv
+    virt-manager
     wireshark
     yarn
 

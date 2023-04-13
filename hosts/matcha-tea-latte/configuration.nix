@@ -8,6 +8,7 @@ in
     ./fonts.nix
     ./packages.nix
     ./vagrant.nix
+    ./wireguard.nix
     ../../modules/sound
     ../../modules/sops
     ../../common/base
