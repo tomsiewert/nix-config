@@ -55,6 +55,7 @@
     openvpn
     remmina
     tdesktop
+    teams
     unstable.tmate
     wireguard-tools
     (pkgs.unstable.mumble.override { pulseSupport = true; })

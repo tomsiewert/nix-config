@@ -45,10 +45,10 @@ bindsym $mod+space focus mode_toggle
 bindsym $mod+a focus parent
 
 set $ws1  "1: term"
-set $ws2  "2: discord"
+set $ws2  "2: chat"
 set $ws3  "3: browser"
-set $ws4  "4: thunderbird"
-set $ws5  "5: term"
+set $ws4  "4: misc"
+set $ws5  "5: misc"
 set $ws6  "6: misc"
 set $ws7  "7: misc"
 set $ws8  "8: code"
@@ -135,11 +135,16 @@ default_border pixel 0
 for_window [class="^.*"] border pixel 0
 
 # Window settings
-assign [class="^Thunderbird$"] $ws4
-assign [instance="mumble" class="Mumble"] $ws2
+for_window [class=".* - Mozilla Thunderbird$"] move to scratchpad
+assign [class="Discord"] $ws2
 assign [instance="spotify" class="Spotify"] $ws10
 
+# Scratchpad
+bindsym $mod+minus scratchpad show
+bindsym $mod+Shift+minus move scratchpad
+
 # startup
+exec --no-startup-id discord 
 exec --no-startup-id spotify
 
 # audio keybindings

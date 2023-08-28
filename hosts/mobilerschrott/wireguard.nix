@@ -31,7 +31,7 @@
       peers = [
         {
           publicKey = "TI8ybamlUvBYMl6t0/AfjWNSZkfLzcg0ylepSme3LyI=";
-          allowedIPs = [ "172.30.254.0/24" "10.40.0.0/24" "10.61.8.0/24" ];
+          allowedIPs = [ "172.30.254.0/24" "10.40.0.0/24" "10.61.8.0/24" "10.61.7.0/24" ];
           endpoint = "92.246.85.201:51820";
           persistentKeepalive = 25;
         }
