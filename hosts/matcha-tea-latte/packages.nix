@@ -52,6 +52,7 @@
 
     # communication
     master.discord
+    teams
     element-desktop
     openvpn
     remmina
